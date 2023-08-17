@@ -1,2 +1,3 @@
 rootProject.name = "Car-service"
+include 'car-service-customer-service'
 
