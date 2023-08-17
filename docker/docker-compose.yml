@@ -31,13 +31,14 @@ services:
     image: stupinvolodymyr/docker-car-service-customer-service
     build:
       context: ..
-      dockerfile: docker/builder/components/Dockerfile
+      dockerfile: docker/builder/components/customer-service/Dockerfile
       args:
         BUILD_PATH: car-service-customer-service
     ports:
-      - 8080:8080
+      - "8000:8000"
     depends_on:
       - db
+      - eureka-server
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/car-service-db
       SPRING_DATASOURCE_USERNAME: user
@@ -46,6 +47,22 @@ services:
       - microservices
     labels:
       kompose.service.type: LoadBalancer
+
+  eureka-server:
+    container_name: car-service-eureka-server
+    image: stupinvolodymyr/docker-car-service-eureka-server
+    build:
+      context: ..
+      dockerfile: docker/builder/components/eureka-server/Dockerfile
+      args:
+        BUILD_PATH: car-service-eureka-server
+    restart: always
+    ports:
+      - '8761:8761'
+    depends_on:
+      - db
+    networks:
+      - microservices
 #  mongodb:
 #    image: mongo
 #    volumes:
