@@ -1,0 +1,62 @@
+version: '3'
+services:
+  db:
+    container_name: mysql-database
+    image: stupinvolodymyr/docker-db
+    build:
+      context: ..
+      dockerfile: docker/db/sql/Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: car-service-db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    hostname: car-service-db
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h car-service-db -u user -p 123456"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - microservices
+    labels:
+      kompose.service.type: LoadBalancer
+
+  car-service-customer-service:
+    container_name: car-service-customer-service
+    image: stupinvolodymyr/docker-car-service-customer-service
+    build:
+      context: ..
+      dockerfile: docker/builder/components/Dockerfile
+      args:
+        BUILD_PATH: car-service-customer-service
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/car-service-db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: 123456
+    networks:
+      - microservices
+    labels:
+      kompose.service.type: LoadBalancer
+#  mongodb:
+#    image: mongo
+#    volumes:
+#      - ./data/mongo:/data/db
+#    ports:
+#      - "27017:27017"
+
+
+volumes:
+  db_data: {}
+
+networks:
+  microservices:
+    driver: bridge
