@@ -1,0 +1,10 @@
+package com.stupin.core.enums;
+
+public enum MechanicRole {
+
+	DIESEL_MECHANIC,
+	GENERAL_AUTOMOTIVE_MECHANIC,
+	TIRE_MECHANIC,
+	SMALL_ENGINE_MECHANIC,
+	SERVICE_TECHNICIANS
+}

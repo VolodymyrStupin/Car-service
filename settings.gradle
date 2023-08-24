@@ -1,4 +1,4 @@
 rootProject.name = "Car-service"
 include 'car-service-customer-service'
 include 'car-service-eureka-server'
-
+include 'car-service-workshop-service'
