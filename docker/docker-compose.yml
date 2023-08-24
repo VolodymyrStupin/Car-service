@@ -1,8 +1,8 @@
 version: '3'
 services:
   db:
-    container_name: mysql-database
-    image: stupinvolodymyr/docker-db
+    container_name: car-service-mysql-db
+    image: stupinvolodymyr/car-service-mysql-db
     build:
       context: ..
       dockerfile: docker/db/sql/Dockerfile
@@ -20,13 +20,57 @@ services:
       timeout: 3s
       retries: 10
     volumes:
-      - db_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     networks:
       - microservices
-    labels:
-      kompose.service.type: LoadBalancer
 
-  car-service-customer-service:
+  mongo:
+    image: mongo:7.0.0
+    container_name: car-service-mongo-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: car-service-nosql-db
+    volumes:
+      - ./db/nosql/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - microservices
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express
+    restart: always  #restart the container regardless of the exit status
+    ports:
+      - "8081:8081"  # port mapping: [external : inside docker environment]
+    depends_on:
+      - mongo
+      - workshop-service
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://root:password@mongo:27017/  # mongodb://{mongo-image-username}:{mongo-image-password}@{mongo-image-name}:{port}
+    networks:
+      - microservices
+
+  eureka-server:
+    container_name: car-service-eureka-server
+    image: stupinvolodymyr/docker-car-service-eureka-server
+    build:
+      context: ..
+      dockerfile: docker/builder/components/eureka-server/Dockerfile
+      args:
+        BUILD_PATH: car-service-eureka-server
+    ports:
+      - "8761:8761"
+    depends_on:
+      - db
+      - mongo
+    networks:
+      - microservices
+
+  customer-service:
     container_name: car-service-customer-service
     image: stupinvolodymyr/docker-car-service-customer-service
     build:
@@ -40,39 +84,33 @@ services:
       - db
       - eureka-server
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/car-service-db
+      SPRING_DATASOURCE_URL: jdbc:mysql://car-service-mysql-db:3306/car-service-db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: 123456
+    networks:
+      - microservices
+
+  workshop-service:
+    container_name: car-service-workshop-service
+    image: stupinvolodymyr/docker-car-service-workshop-service
+    build:
+      context: ..
+      dockerfile: docker/builder/components/workshop-service/Dockerfile
+      args:
+        BUILD_PATH: car-service-workshop-service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mongo
+      - eureka-server
     networks:
       - microservices
     labels:
       kompose.service.type: LoadBalancer
 
-  eureka-server:
-    container_name: car-service-eureka-server
-    image: stupinvolodymyr/docker-car-service-eureka-server
-    build:
-      context: ..
-      dockerfile: docker/builder/components/eureka-server/Dockerfile
-      args:
-        BUILD_PATH: car-service-eureka-server
-    restart: always
-    ports:
-      - '8761:8761'
-    depends_on:
-      - db
-    networks:
-      - microservices
-#  mongodb:
-#    image: mongo
-#    volumes:
-#      - ./data/mongo:/data/db
-#    ports:
-#      - "27017:27017"
-
 
 volumes:
-  db_data: {}
+  mysql_data:
 
 networks:
   microservices:
