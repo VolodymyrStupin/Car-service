@@ -23,8 +23,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.cloud:spring-cloud-commons:4.0.4'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.0.3'
+	implementation 'org.springframework.cloud:spring-cloud-commons'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
 
 	implementation 'com.github.jasync-sql:jasync-r2dbc-mysql:2.2.1'
 	implementation 'dev.miku:r2dbc-mysql:0.8.2.RELEASE'

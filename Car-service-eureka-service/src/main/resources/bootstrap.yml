@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: car-service-eureka-service
+  profiles:
+    active: dev #change active profile from "dev" into "docker" if you want to run in docker container
+  cloud:
+    config:
+      uri: http://localhost:8888 #change uri host from "localhost" to "car-service-config-service" if you want to run in docker container
+      enabled: true
