@@ -1,0 +1,16 @@
+server:
+  port: 8000
+spring:
+  application:
+    name: car-service-customer-service
+
+#Logging properties
+logging:
+  level:
+    org:
+      springframework: info
+    com:
+      stupin: debug
+  file:
+    path: ./logs
+    name: ${logging.file.path}/application.log

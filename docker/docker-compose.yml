@@ -1,6 +1,6 @@
 version: '3'
 services:
-  db:
+  mysql:
     container_name: car-service-mysql-db
     image: stupinvolodymyr/car-service-mysql-db
     build:
@@ -26,7 +26,7 @@ services:
 
   mongo:
     image: mongo:7.0.0
-    container_name: car-service-mongo-db
+    container_name: car-service-mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
@@ -41,7 +41,6 @@ services:
   mongo-express:
     image: mongo-express
     container_name: mongo_express
-    restart: always  #restart the container regardless of the exit status
     ports:
       - "8081:8081"  # port mapping: [external : inside docker environment]
     depends_on:
@@ -54,19 +53,32 @@ services:
     networks:
       - microservices
 
-  eureka-server:
-    container_name: car-service-eureka-server
-    image: stupinvolodymyr/docker-car-service-eureka-server
+
+  config-service:
+    container_name: car-service-config-service
+    image: stupinvolodymyr/docker-car-service-config-service
     build:
       context: ..
-      dockerfile: docker/builder/components/eureka-server/Dockerfile
+      dockerfile: docker/builder/components/config-service/Dockerfile
       args:
-        BUILD_PATH: car-service-eureka-server
+        BUILD_PATH: Car-service-config-service
+    ports:
+      - "8888:8888"
+    networks:
+      - microservices
+
+  eureka-service:
+    container_name: car-service-eureka-service
+    image: stupinvolodymyr/docker-car-service-eureka-service
+    build:
+      context: ..
+      dockerfile: docker/builder/components/eureka-service/Dockerfile
+      args:
+        BUILD_PATH: Car-service-eureka-service
     ports:
       - "8761:8761"
     depends_on:
-      - db
-      - mongo
+      - config-service
     networks:
       - microservices
 
@@ -77,12 +89,13 @@ services:
       context: ..
       dockerfile: docker/builder/components/customer-service/Dockerfile
       args:
-        BUILD_PATH: car-service-customer-service
+        BUILD_PATH: Car-service-customer-service
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - eureka-server
+      - config-service
+      - mysql
+      - eureka-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://car-service-mysql-db:3306/car-service-db
       SPRING_DATASOURCE_USERNAME: user
@@ -97,12 +110,13 @@ services:
       context: ..
       dockerfile: docker/builder/components/workshop-service/Dockerfile
       args:
-        BUILD_PATH: car-service-workshop-service
+        BUILD_PATH: Car-service-workshop-service
     ports:
       - "8001:8001"
     depends_on:
+      - config-service
       - mongo
-      - eureka-server
+      - eureka-service
     networks:
       - microservices
     labels:
